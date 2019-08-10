@@ -29,6 +29,7 @@
 
 <script>
 import { getChannels } from '@/api/channel'
+import { getArticle } from '@/api/article'
 export default {
 
   data () {
@@ -36,10 +37,11 @@ export default {
       list: [],
       loading: false,
       finished: false,
-      activeTab: '',
+      activeTab: 0,
       count: 0,
       isLoading: false,
       channels: []
+
     }
   },
   created () {
@@ -70,21 +72,30 @@ export default {
           window.localStorage.setItem('channels', JSON.stringify(this.channels))
         }
       }
+      // this.channels.map((item) => {
+      //   this.$set(item, 'articles', [])
+      // })
     },
-    onLoad () {
-      // 异步更新数据
-      setTimeout(() => {
-        for (let i = 0; i < 10; i++) {
-          this.list.push(this.list.length + 1)
-        }
-        // 加载状态结束
-        this.loading = false
+    async onLoad () {
+      const currentChannel = this.channels[this.activeTab]
+      const id = currentChannel.id
 
-        // 数据全部加载完成
-        if (this.list.length >= 40) {
-          this.finished = true
-        }
-      }, 500)
+      const data = await getArticle({
+
+        channelId: id,
+        timestamp: this.timestamp
+      })
+      console.log(data)
+      currentChannel.articles.push(...data.results)
+
+      // 记录时间戳
+      this.timestamp = data.pre_timestamp
+      // 本次数据加载完毕
+      this.loading = false
+      // 判断数据是否加载完毕
+      if (data.results.length === 0) {
+        this.finished = true
+      }
     },
     onRefresh () {
       setTimeout(() => {
